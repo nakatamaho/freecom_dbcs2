@@ -71,7 +71,15 @@ const char shellver[] = FREECOM_VERSION
 #endif
 	MACHINE
 ;
-static const char shelldate[] = __DATE__ " " __TIME__;
+#ifndef FREECOM_BUILD_DATE
+#define FREECOM_BUILD_DATE __DATE__
+#endif
+
+#ifndef FREECOM_BUILD_TIME
+#define FREECOM_BUILD_TIME __TIME__
+#endif
+
+static const char shelldate[] = FREECOM_BUILD_DATE " " FREECOM_BUILD_TIME;
 const char shellname[] = "FreeCom";
 
 #if !defined(IBMPC)
@@ -85,7 +93,7 @@ void middle_version(void)
     memcpy(ssvi, shellver, s - shellver);
     printf("\n%s %s"
           MACHINE
-          " [" __DATE__ "]\n",
+          " [" FREECOM_BUILD_DATE "]\n",
           shellname, ssvi);
   }
 }
