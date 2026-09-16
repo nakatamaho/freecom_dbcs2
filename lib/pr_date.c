@@ -81,7 +81,7 @@ int parsedate (const char * s, struct dosdate_t *const datep) {
   s = parsenum(s, 3, &items, nums);
 
   if (!s || *s)                 /* general error or too many characters */
-    return E_Empty;
+    return E_Syntax;
 
   _dos_getdate(&d);             /* fetch current info */
 #ifdef FEATURE_NLS
