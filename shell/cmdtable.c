@@ -150,6 +150,7 @@ struct CMD internalCommands[] =
 #endif
 
 #ifdef INCLUDE_CMD_MEMORY
+  {"MEM", CMD_NO_ERRORLEVEL, cmd_memory, TEXT_CMDHELP_MEMORY},
   {"MEMORY", CMD_NO_ERRORLEVEL, cmd_memory, TEXT_CMDHELP_MEMORY},
 #endif
 
