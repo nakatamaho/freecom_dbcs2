@@ -234,8 +234,10 @@ symKey symkeys[] = {		/* symbolic keynames, uppercased! */
 	,{ KEY_F8, "F8" }
 	,{ KEY_F9, "F9" }
 	,{ KEY_F10, "F10" }
+#if !defined(PC88VA)
 	,{ KEY_F11, "F11" }
 	,{ KEY_F12, "F12" }
+#endif
 
 	,{ KEY_LEFT, "LEFT" }
 	,{ KEY_RIGHT, "RIGHT" }
@@ -245,8 +247,10 @@ symKey symkeys[] = {		/* symbolic keynames, uppercased! */
 	,{ KEY_DEL, "DEL" }
 	,{ KEY_HOME, "HOME" }
 	,{ KEY_END, "END" }
+#if !defined(PC88VA)
 	,{ KEY_PUP, "PUP" }
 	,{ KEY_PDOWN, "PDOWN" }
+#endif
 
 	,{ 0, ""}
 };

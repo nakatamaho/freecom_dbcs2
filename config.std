@@ -58,6 +58,9 @@ __TARGET = -DNEC98
 !if $(IBMPC)0 == 10
 __TARGET = -DIBMPC
 !endif
+!if $(PC88VA)0 == 10
+__TARGET = -DPC88VA
+!endif
 
 !if $(DBCS)0 == 10
 __DBCS = -DDBCS -DJAPANESE

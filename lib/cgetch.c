@@ -152,7 +152,28 @@ int cgetchar(void)
 	return c;
 }
 
-#else /* IBMPC */
+#elif defined(PC88VA)
+
+static int pc88va_dos_getch(void)
+{
+	IREGS regs;
+	regs.r_ax = 0x0700;
+	intrpt(0x21, &regs);
+	return regs.r_ax & 0xff;
+}
+
+int cgetchar(void)
+{
+	int c = pc88va_dos_getch();
+
+	if (c == 0)
+		c = SCANCODE(pc88va_dos_getch());
+	if (c == KEY_CTL_C)
+		ctrlBreak = 1;
+	return c;
+}
+
+#else /* IBMPC or generic DOS */
 
 static int mygetch( void )
 {

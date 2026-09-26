@@ -25,6 +25,19 @@ unsigned mywherex (void) {
 unsigned mywherey (void) {
     return 1U + *(unsigned char far *)MK_FP(0x60, 0x110);
 }
+#elif defined(PC88VA)
+unsigned mywherex (void) {
+    IREGS r;
+    r.r_ax = 0x2e00;
+    intrpt(0x83, &r);
+    return 1U + ((r.r_dx >> 8) & 0xff);
+}
+unsigned mywherey (void) {
+    IREGS r;
+    r.r_ax = 0x2e00;
+    intrpt(0x83, &r);
+    return 1U + (r.r_dx & 0xff);
+}
 #elif defined(IBMPC)
 #define MK_PTR(type,seg,ofs) ((type FAR*) MK_FP (seg, ofs))
 /* safer edition of MK_FP (Arkady) */
@@ -117,6 +130,17 @@ static void setcursorstate_nec98(int insert)
 }
 
 # define setcursorstate setcursorstate_nec98
+
+#elif defined(PC88VA)
+
+static void setcursorstate_pc88va(int insert)
+{
+    IREGS r;
+    r.r_ax = insert ? 0x2513 : 0x2503;
+    intrpt(0x83, &r);
+}
+
+# define setcursorstate setcursorstate_pc88va
 
 #elif defined(IBMPC)
 

@@ -257,7 +257,7 @@ void critEnableRepeatCheck(void);
 unsigned critDisableRepeatCheck(void);
 void critEndRepCheck(void);
 
-#if defined(IBMPC) || defined(NEC98) || defined(FMR) || defined(IGNORE_ENHANCED_INPUT)
+#if defined(IBMPC) || defined(NEC98) || defined(PC88VA) || defined(FMR) || defined(IGNORE_ENHANCED_INPUT)
 # ifndef IGNORE_ENHANCED_INPUT
 /* prf.c */
 int putch_int29(int c);
@@ -275,7 +275,8 @@ enum MyMachine {
 	MYMACHINE_UNKNOWN = 0,
 	MYMACHINE_IBMPC,
 	MYMACHINE_NEC98,
-	MYMACHINE_FMR
+	MYMACHINE_FMR,
+	MYMACHINE_PC88VA
 };
 extern int mymachine;
 void mydelay(unsigned ms);

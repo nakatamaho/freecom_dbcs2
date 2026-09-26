@@ -61,10 +61,19 @@ while (( "$#" )); do
     nec98)
 	unset GENDOS
 	unset IBMPC
+	unset PC88VA
 	export NEC98=1
+	;;
+    pc88va)
+	unset GENDOS
+	unset IBMPC
+	unset NEC98
+	unset NO_ENH_INP
+	export PC88VA=1
 	;;
     ibmpc)
 	unset GENDOS
+	unset PC88VA
 	export IBMPC=1
 	unset NEC98
 	;;
@@ -73,6 +82,7 @@ while (( "$#" )); do
 	export NO_ENH_INP=1
 	unset IBMPC
 	unset NEC98
+	unset PC88VA
 	;;
     no-xms-swap)
 	unset XMS_SWAP

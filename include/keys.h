@@ -50,6 +50,49 @@
 #define KEY_CTRL_LEFT	(KEY_LEFT | KEY_CTRL_PRESSED)
 #define KEY_CTRL_RIGHT	(KEY_RIGHT | KEY_CTRL_PRESSED)
 
+#elif defined(PC88VA)
+
+/* The kernel's DOS CON adapter emits the common FreeDOS scan-code pairs. */
+#define KEY_F1	SCANCODE(0x3b)
+#define KEY_F2	SCANCODE(0x3c)
+#define KEY_F3	SCANCODE(0x3d)
+#define KEY_F4	SCANCODE(0x3e)
+#define KEY_F5	SCANCODE(0x3f)
+#define KEY_F6	SCANCODE(0x40)
+#define KEY_F7	SCANCODE(0x41)
+#define KEY_F8	SCANCODE(0x42)
+#define KEY_F9	SCANCODE(0x43)
+#define KEY_F10	SCANCODE(0x44)
+
+#define KEY_LEFT	SCANCODE(0x4b)
+#define KEY_CTRL_LEFT	SCANCODE(0x73)
+#define KEY_RIGHT	SCANCODE(0x4d)
+#define KEY_CTRL_RIGHT	SCANCODE(0x74)
+#define KEY_UP		SCANCODE(0x48)
+#define KEY_DOWN	SCANCODE(0x50)
+#define KEY_INS		SCANCODE(0x52)
+#define KEY_INSERT	SCANCODE(0x52)
+#define KEY_DEL		SCANCODE(0x53)
+#define KEY_DELETE	SCANCODE(0x53)
+#define KEY_HOME	SCANCODE(0x47)
+#define KEY_END		SCANCODE(0x4f)
+
+/* PC-88VA-only DOS scan extensions; current shell editing leaves them inert. */
+#define KEY_SHIFT_F1	SCANCODE(0x80)
+#define KEY_SHIFT_F2	SCANCODE(0x81)
+#define KEY_SHIFT_F3	SCANCODE(0x82)
+#define KEY_SHIFT_F4	SCANCODE(0x83)
+#define KEY_SHIFT_F5	SCANCODE(0x84)
+#define KEY_SHIFT_F6	SCANCODE(0x85)
+#define KEY_SHIFT_F7	SCANCODE(0x86)
+#define KEY_SHIFT_F8	SCANCODE(0x87)
+#define KEY_SHIFT_F9	SCANCODE(0x88)
+#define KEY_SHIFT_F10	SCANCODE(0x89)
+#define KEY_SHIFT_UP	SCANCODE(0x8a)
+#define KEY_SHIFT_DOWN	SCANCODE(0x8b)
+#define KEY_SHIFT_LEFT	SCANCODE(0x8c)
+#define KEY_SHIFT_RIGHT	SCANCODE(0x8d)
+
 #else /* IBMPC */
 
 #define KEY_F1	SCANCODE(59)

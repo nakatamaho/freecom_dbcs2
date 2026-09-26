@@ -64,6 +64,16 @@ void goxy(const unsigned char xo, const unsigned char yo)
 	s[6] = '0' + (x%10);
 	cputs_int29(s);
 }
+#elif defined(PC88VA)
+void goxy(const unsigned char x, const unsigned char y)
+{
+    IREGS r;
+    unsigned char column = x ? (unsigned char)(x - 1) : 0;
+    unsigned char row = y ? (unsigned char)(y - 1) : 0;
+    r.r_ax = 0x0800;
+    r.r_dx = ((unsigned)column << 8) | row;
+    intrpt(0x83, &r);
+}
 #elif defined(IBMPC)
 void goxy(const unsigned char x, const unsigned char y)
 {

@@ -248,6 +248,8 @@ int init_mymachine(void)
 # endif
 #elif defined(IBMPC)
 	mymachine = MYMACHINE_IBMPC;
+#elif defined(PC88VA)
+	mymachine = MYMACHINE_PC88VA;
 #else
 	mymachine = MYMACHINE_UNKNOWN;
 #endif
