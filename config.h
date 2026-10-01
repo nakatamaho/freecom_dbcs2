@@ -182,6 +182,19 @@
 
  */
 
+/* PC-88VA: a V30 machine without XMS, UMBs or long-filename support.
+   Leave out commands and features that cannot operate there; this only
+   selects existing FreeCOM configuration options. */
+#ifdef PC88VA
+#undef FEATURE_LONG_FILENAMES
+#undef FEATURE_KERNEL_SWAP_SHELL
+#undef INCLUDE_CMD_LFNFOR
+#undef INCLUDE_CMD_LOADFIX
+#undef INCLUDE_CMD_LOADHIGH
+#undef INCLUDE_CMD_MEMORY
+#undef INCLUDE_CMD_FDDEBUG
+#endif
+
 /********
     ***** Resolve dependencies
     ***** Don't change without change the appropriate sources!
