@@ -72,7 +72,7 @@ static void kswapSetISR(void)
 void kswapRegister(kswap_p ctxt)
 {   IREGS r;
 
-    dprintf(("[KSWAP: Registering static context at: 0x%04x]\n", (word)ctxt));
+    dprintf(("[KSWAP: Registering static context at: 0x%04x]\n", FP_SEG((void far *)ctxt)));
     assert(ctxt);
     /* our own PSP gets patched in order to load the values of the
         Criter and ^Break handlers of the context on termination
@@ -83,7 +83,7 @@ void kswapRegister(kswap_p ctxt)
     kswapSetISR();
 
     r.r_ax = 0x4bfd;    /* Set kswap argument structure segm */
-    r.r_bx = (word)ctxt;
+    r.r_bx = FP_SEG((void far *)ctxt);
     r.r_dx = FD_MAGIC;
     intrpt(0x21, &r);
     if(r.r_flags & 1) { /* failed */
@@ -91,22 +91,15 @@ void kswapRegister(kswap_p ctxt)
         dprintf(("[KSWAP: Registering failed, kernel swap deactivated]\n"));
         return;
     }
-    /* Initialize the constant values */
-    /* environment block required only, if swapping is avail */
-    ctxt->envSize = mcb_length(env_glbSeg);
-    ctxt->envSegm = allocSysBlk(ctxt->envSize, 0x82);
-    if(!ctxt->envSegm) {
-        error_kswap_allocmem();
-        swapOnExec = ERROR;
-    }
-    else
-        dprintf(("[KSWAP: master environment allocated at 0x%04x]\n"
-         , ctxt->envSegm));
+    /* Allocate the saved environment at swap time: initialization and SET
+       may still change its size after this registration. */
+    ctxt->envSize = 0;
+    ctxt->envSegm = 0;
 }
 void kswapDeRegister(kswap_p ctxt)
 {
     if(swapOnExec != ERROR) {   /* context belongs to this FreeCOM */
-        dprintf(("[KSWAP: DeRegistering static context at: 0x%04x]\n", (word)ctxt));
+        dprintf(("[KSWAP: DeRegistering static context at: 0x%04x]\n", FP_SEG((void far *)ctxt)));
         assert(ctxt);
         ctxt->shell = 0;        /* causes the kernel swap support to exit */
     }
@@ -119,7 +112,7 @@ void kswapDeRegister(kswap_p ctxt)
 unsigned kswapMkStruc(const char * const prg, const char * const cmdline)
 {
     word shellname;
-    word segm;
+    word segm, envSize;
     char *q, *h;
 
     assert(prg);
@@ -134,14 +127,26 @@ unsigned kswapMkStruc(const char * const prg, const char * const cmdline)
         swap after all */
 
     /* preserve the environment */
-    assert(kswapContext->envSegm);
-    assert(kswapContext->envSize);
+    envSize = env_glbSeg ? mcb_length(env_glbSeg) : 0;
+    if(!envSize)
+        return FALSE;
     segm = kswapContext->envSegm;
+    if(!segm || mcb_length(segm) < envSize) {
+        word replacement = allocSysBlk(envSize, forceLow ? 0x02 : 0x82);
+        if(!replacement) {
+            error_kswap_allocmem();
+            return FALSE;       /* Execute normally; never overrun the backup. */
+        }
+        if(segm)
+            freeSysBlk(segm);
+        segm = kswapContext->envSegm = replacement;
+    }
+    kswapContext->envSize = envSize;
     dprintf(("[KSWAP: Updating master environment at 0x%04x]\n", segm));
     assert(isMCB(SEG2MCB(segm)));
     assert(isMCB(SEG2MCB(env_glbSeg)));
     assert(mcb_length(env_glbSeg) <= mcb_length(segm));
-    _fmemcpy(MK_FP(segm, 0), MK_FP(env_glbSeg, 0), mcb_length(env_glbSeg));
+    _fmemcpy(MK_FP(segm, 0), MK_FP(env_glbSeg, 0), envSize);
 
     /* Update the shell name as maybe %COMSPEC% was changed */
     /* COMSPEC is the central and traditionally the only place of the name of
