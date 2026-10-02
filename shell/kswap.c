@@ -106,6 +106,64 @@ void kswapDeRegister(kswap_p ctxt)
 }
 
 
+/* Context variables are strings. Encode the counters in hex, after reserving
+   the entry, so that the saved counters include the entry's own allocation.
+   This avoids reconstructing history/dirstack numbering from their contents. */
+#define KSWAP_INFO_BYTES (sizeof(ctxt_info_t) * (CTXT_TAG_ALIAS - CTXT_FIRST_TAG + 1))
+#define KSWAP_STATUS_BYTES (KSWAP_INFO_BYTES + 1)
+
+static int kswapSaveStatus(void)
+{
+    static const char hex[] = "0123456789abcdef";
+    char reserve[2 * KSWAP_STATUS_BYTES + 1];
+    unsigned i, value;
+    char far *p;
+
+    memset(reserve, '0', sizeof(reserve) - 1);
+    reserve[sizeof(reserve) - 1] = 0;
+    if(ctxtSet(CTXT_TAG_SWAPINFO, CTXT_SWAPINFO_STATUS, reserve))
+        return FALSE;
+    p = ctxtAddress(CTXT_TAG_SWAPINFO, CTXT_SWAPINFO_STATUS);
+    if(!p)
+        return FALSE;
+    for(i = 0; i < KSWAP_STATUS_BYTES; ++i) {
+        value = i < KSWAP_INFO_BYTES ? ((unsigned char *)ctxt_info)[i]
+                                    : (forceLow != 0);
+        *p++ = hex[value >> 4];
+        *p++ = hex[value & 15];
+    }
+    return TRUE;
+}
+
+static int kswapRestoreStatus(void)
+{
+    unsigned char saved[KSWAP_STATUS_BYTES];
+    unsigned i, value;
+    char c;
+    char far *p = ctxtAddress(CTXT_TAG_SWAPINFO, CTXT_SWAPINFO_STATUS);
+
+    if(!p)
+        return FALSE;
+    for(i = 0; i < 2 * KSWAP_STATUS_BYTES; ++i) {
+        c = *p++;
+        if(c >= '0' && c <= '9')
+            value = c - '0';
+        else if(c >= 'a' && c <= 'f')
+            value = c - 'a' + 10;
+        else
+            return FALSE;
+        if(!(i & 1))
+            saved[i / 2] = value << 4;
+        else
+            saved[i / 2] |= value;
+    }
+    if(*p || saved[KSWAP_INFO_BYTES] > 1)
+        return FALSE;
+    memcpy(ctxt_info, saved, KSWAP_INFO_BYTES);
+    forceLow = saved[KSWAP_INFO_BYTES];
+    return TRUE;
+}
+
 /* Update the kswap argument block
     Return: 0 on error <-> no swapping possible
         else: segment of structure */
@@ -113,6 +171,8 @@ unsigned kswapMkStruc(const char * const prg, const char * const cmdline)
 {
     word shellname;
     word segm, envSize;
+    int shellInContext;
+    struct MCB _seg *mcb;
     char *q, *h;
 
     assert(prg);
@@ -151,8 +211,9 @@ unsigned kswapMkStruc(const char * const prg, const char * const cmdline)
     /* Update the shell name as maybe %COMSPEC% was changed */
     /* COMSPEC is the central and traditionally the only place of the name of
         the shell */
-    if(isSwapFile
-     || (shellname = env_findVar(segm, "COMSPEC") + 8) == (unsigned)-1 + 8) {
+    shellInContext = isSwapFile
+     || (shellname = env_findVar(segm, "COMSPEC") + 8) == (unsigned)-1 + 8;
+    if(shellInContext) {
         char *p = comResFile();
         ctxtSet(CTXT_TAG_SWAPINFO, CTXT_SWAPINFO_SHELLNAME, p);
         free(p);
@@ -188,10 +249,24 @@ unsigned kswapMkStruc(const char * const prg, const char * const cmdline)
         ctxtSet(CTXT_TAG_SWAPINFO, CTXT_SWAPINFO_CMDLINE, "\1 \r");
     ctxtSet(CTXT_TAG_SWAPINFO, CTXT_SWAPINFO_PRGNAME, prg);
 
-    return (kswapContext->cmdline   /* fetch first in case of failure */
-       = ctxtAddress(CTXT_TAG_SWAPINFO, CTXT_SWAPINFO_CMDLINE)) != 0
-     && (kswapContext->prg
-       = ctxtAddress(CTXT_TAG_SWAPINFO, CTXT_SWAPINFO_PRGNAME)) != 0;
+    if(!kswapSaveStatus())
+        return FALSE;
+    /* Adding entries can relocate ctxt; take all pointers only afterwards. */
+    if(shellInContext)
+        kswapContext->shell = ctxtAddress(CTXT_TAG_SWAPINFO, CTXT_SWAPINFO_SHELLNAME);
+    kswapContext->cmdline = ctxtAddress(CTXT_TAG_SWAPINFO, CTXT_SWAPINFO_CMDLINE);
+    if(!kswapContext->shell || !kswapContext->cmdline)
+        return FALSE;
+    kswapContext->prg = ctxtAddress(CTXT_TAG_SWAPINFO, CTXT_SWAPINFO_PRGNAME);
+    if(!kswapContext->prg)
+        return FALSE;
+
+    /* The child and the reloaded shell need these strings and counters.
+       DOS must not release the context when this shell exits to KSSF. */
+    mcb = MK_SEG_PTR(struct MCB, SEG2MCB(ctxt));
+    mcb->mcb_ownerPSP = 8;
+    kswapContext->dyn_ctxt = ctxt;
+    return TRUE;
 
 }
 
@@ -214,7 +289,19 @@ int kswapLoadStruc(void)
     fddebug = kswapContext->debug;
 #endif
     grabComFilename(1, kswapContext->shell);
-    if((ctxt = kswapContext->dyn_ctxt) == 0) {
+    ctxt = kswapContext->dyn_ctxt;
+    kswapContext->dyn_ctxt = 0;
+    if(ctxt) {
+        struct MCB _seg *mcb = MK_SEG_PTR(struct MCB, SEG2MCB(ctxt));
+        /* While the shell runs, ordinary context relocation and DOS exit
+           own this allocation again. KSSF owns it only across the swap. */
+        mcb->mcb_ownerPSP = _psp;
+        if(!kswapRestoreStatus()) {
+            freeBlk(ctxt);
+            ctxt = 0;
+        }
+    }
+    if(!ctxt) {
         error_no_context_after_swap();
         ctxtCreate();
     }

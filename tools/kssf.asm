@@ -136,6 +136,13 @@ dbg_1:
 	mov es, ax				; MCB of context
 	mov WORD [ES:1], ds		; owner of context := kssf
 	mov ax, [ES:10h+?envSegm]		; environment segm
+	mov bx, [ES:10h+?dyn_ctxt]		; pending context if shell reload failed
+	or bx, bx
+	jz exit_noDynamic
+	dec bx
+	mov es, bx
+	mov WORD [ES:1], ds		; release it on KSSF termination, too
+exit_noDynamic:
 	or ax, ax
 	jz exit_noCtxt
 	dec ax
