@@ -28,6 +28,7 @@ cmd_buf:
 
 SEGMENT .text
 
+CPU 8086        ; expand out-of-range conditionals without 386-only opcodes
 ORG 100h		; this is an executable program, but as small as possible
 
 start:
