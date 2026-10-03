@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 import unittest
-from run import probe, require
+from run import at_root_prompt, probe, require
 from qmp import key
 
 
@@ -20,6 +20,11 @@ class Checks(unittest.TestCase):
     def test_failed_gate_raises(self):
         with self.assertRaises(RuntimeError):
             require(False, 'not run')
+
+    def test_reject_stale_prompt_during_a_resource_question(self):
+        self.assertTrue(at_root_prompt(b'READY\nA:\\>\n\n'))
+        self.assertFalse(at_root_prompt(b'A:\\>call /s PROBE\nEnter another location:\n'))
+        self.assertFalse(at_root_prompt(b''))
 
     def test_keys(self):
         self.assertEqual(key('%'), 'shift-5')

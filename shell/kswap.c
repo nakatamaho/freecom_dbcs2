@@ -194,7 +194,10 @@ unsigned kswapMkStruc(const char * const prg, const char * const cmdline)
     if(!segm || mcb_length(segm) < envSize) {
         word replacement = allocSysBlk(envSize, forceLow ? 0x02 : 0x82);
         if(!replacement) {
-            error_kswap_allocmem();
+            /* Loading STRINGS can itself run out of memory and prompt for
+               another resource file. Keep this fallback diagnostic resident. */
+            fputs("KSWAP: Not enough memory to save the environment; not swapping.\n",
+                  stderr);
             return FALSE;       /* Execute normally; never overrun the backup. */
         }
         if(segm)

@@ -45,6 +45,11 @@ def probe(data):
     return tuple(int(value, 16) for value in match.groups())
 
 
+def at_root_prompt(screen):
+    lines = screen.rstrip().splitlines()
+    return bool(lines) and lines[-1].strip() == b'A:\\>'
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--output', required=True, type=Path)
@@ -117,7 +122,7 @@ def main():
             for _ in range(30):
                 time.sleep(1)
                 screen = qmp(tag, '--screen')
-                if b'KSSF READY' in screen and b'A:\\>' in screen:
+                if b'KSSF READY' in screen and at_root_prompt(screen):
                     break
             else:
                 raise RuntimeError('boot did not reach the shell')
@@ -128,7 +133,7 @@ def main():
                 screens.append(screen.decode())
                 require(b'PANIC' not in screen and b'context is missing' not in screen,
                         'guest corruption or lost context')
-                require(b'A:\\>' in screen, 'no root prompt after command')
+                require(at_root_prompt(screen), 'no root prompt after command')
 
             if negative:
                 send('HOG')
@@ -169,8 +174,8 @@ def main():
             require(all(0 < allocation <= 1024 and owners > 0 for allocation, owners in samples),
                     'OOM must fall back to ordinary execution with shell resident')
             require(samples[0] == samples[1], 'failed swaps changed allocation accounting')
-            require(any('Unable' in text or 'memory' in text.lower() for text in screens),
-                    'missing allocation failure diagnostic')
+            require(sum('KSWAP: Not enough memory to save the environment; not swapping.' in text
+                        for text in screens) >= 2, 'missing allocation failure diagnostic')
         else:
             baseline = probe(read('BASE.OUT'))
             samples = [probe(read('S%02d.OUT' % i)) for i in range(20)]

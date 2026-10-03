@@ -11,7 +11,9 @@ changed by this branch. No VA, hardware or milestone acceptance is implied.
 - Allocate/check the saved environment against its current MCB length at each
   swap. Initial `/E:` resizing therefore cannot overrun an early allocation.
   Allocate a replacement before freeing an old backup; if allocation fails,
-  retain the shell and execute without swapping.
+  retain the shell and execute without swapping. The failure diagnostic is
+  resident: trying to load STRINGS while out of memory could otherwise prompt
+  for a resource file instead of reaching the ordinary EXEC fallback.
 - Keep the dynamic context allocated across the shell's DOS exit, then return
   its ownership to the reloaded shell. Save the context counters in a reserved
   hex-encoded context entry after its allocation, including the `/LOW` policy.
@@ -94,7 +96,7 @@ probe validates the MCB traversal and writes its own files because redirected
 `CALL /S` is not supported. Probe allocation is an EXEC observation, not an
 idle-memory or arbitrary-application-capacity claim.
 
-Current limits: tests are pending until the runner and CI succeed on the exact
-source revision. Borland builds, UMB operation, live environment relocation,
+Acceptance is revision-specific: require a successful `result.json` and the
+`FreeCOM KSSF regression` CI job on the exact source revision. Borland builds, UMB operation, live environment relocation,
 failed shell-reload cleanup and VA/hardware behavior are not qualified by these
 cases. Preserve these limits even after the bounded PC regression passes.
