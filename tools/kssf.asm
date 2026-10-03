@@ -92,15 +92,22 @@ mainloop:
 	mov ax, 4b00h
 	int 21h					; execute external program
 	jc execPrg1
-	mov ah, 4dh             ; collect the child's DOS return code before reload
+	mov ah, 4dh             ; keep status separate from a failed DOS-4B API
 	int 21h
-	xor ah, ah
+	mov sp, tsrend + STACK_SIZE
+	mov dx, cs
+	mov ds, dx
+	mov es, [context]
+	mov [ES:?childStatus], ax ; AL exit code, AH termination reason
+	mov WORD [ES:?execErr], 0
+	jmp execShell
 execPrg1:
 	mov sp, tsrend + STACK_SIZE	; standard stack position
 	mov dx, cs
 	mov ds, dx
 	mov es, [context]
 	mov [ES:?execErr], ax	; error code of DOS-4B API
+	mov WORD [ES:?childStatus], 0
 execShell:
 	mov ax, shellCmdLine
 	mov [eb_cmdline], ax

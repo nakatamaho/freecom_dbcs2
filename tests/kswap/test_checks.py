@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 import unittest
-from run import at_root_prompt, probe, require
+from run import at_root_prompt, check_guest_screen, probe, require
 from qmp import key
 
 
@@ -25,6 +25,13 @@ class Checks(unittest.TestCase):
         self.assertTrue(at_root_prompt(b'READY\nA:\\>\n\n'))
         self.assertFalse(at_root_prompt(b'A:\\>call /s PROBE\nEnter another location:\n'))
         self.assertFalse(at_root_prompt(b''))
+
+    def test_returning_to_a_prompt_does_not_hide_an_error_diagnostic(self):
+        check_guest_screen(b'COMPLETED\nA:\\>\n')
+        for screen in (b'String #38\nA:\\>\n', b'PANIC\nA:\\>\n',
+                       b'context is missing\nA:\\>\n', b'not returned'):
+            with self.subTest(screen=screen), self.assertRaises(RuntimeError):
+                check_guest_screen(screen)
 
     def test_keys(self):
         self.assertEqual(key('%'), 'shift-5')

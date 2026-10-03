@@ -286,8 +286,6 @@ int kswapLoadStruc(void)
 
     /* kswapContext->prg had been disabled in kswapInit() */
     assert(!kswapContext->prg);
-    setErrorLevel(kswapContext->execErr);
-
     canexit = kswapContext->canexit;
     defaultToSwap = kswapContext->dfltSwap;
 #ifndef NDEBUG
@@ -319,6 +317,13 @@ int kswapLoadStruc(void)
       env_resizeCtrl &= ~ENV_USEUMB;
     /* if the size does not change this function performs no actions */
     env_setsize(0, kswapContext->envSize);
+
+    /* Message resources and context must be ready before an EXEC error is
+       diagnosed. A successful child's nonzero AL is not a DOS-4B error. */
+    if(kswapContext->execErr)
+        setErrorLevel(kswapContext->execErr);
+    else
+        setChildStatus(kswapContext->childStatus);
 
     return TRUE;
 }
