@@ -194,10 +194,12 @@ unsigned kswapMkStruc(const char * const prg, const char * const cmdline)
     if(!segm || mcb_length(segm) < envSize) {
         word replacement = allocSysBlk(envSize, forceLow ? 0x02 : 0x82);
         if(!replacement) {
+            static const char message[] =
+                "KSWAP: Not enough memory to save the environment; not swapping.\r\n";
             /* Loading STRINGS can itself run out of memory and prompt for
-               another resource file. Keep this fallback diagnostic resident. */
-            fputs("KSWAP: Not enough memory to save the environment; not swapping.\n",
-                  stderr);
+               another resource file. Also avoid CRT stdio: release FreeCOM
+               uses handle-valued FILE pointers, not CRT FILE structures. */
+            dos_write(fileno(stderr), message, sizeof(message) - 1);
             return FALSE;       /* Execute normally; never overrun the backup. */
         }
         if(segm)
