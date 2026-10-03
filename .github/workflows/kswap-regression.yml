@@ -1,0 +1,47 @@
+name: FreeCOM KSSF regression
+on:
+  push:
+    branches: [fix/kswap-state]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  pc-kswap:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: shell
+      - uses: actions/checkout@v4
+        with:
+          repository: nakatamaho/freedos-pc88va
+          ref: 6d4e2dda024d21d3a8380adfa8900201be3bfdcc
+          path: toolchain
+      - name: Prepare and verify the public identity-pinned compiler image
+        run: python3 -B toolchain/tools/m19/toolchain.py
+      - name: Prepare the public PC verification environment
+        run: |
+          mkdir -p "$RUNNER_TEMP/kswap-results"
+          docker run -d --name kswap-runtime --platform linux/amd64 \
+            -v "$RUNNER_TEMP/kswap-results:/work" -w /work \
+            debian@sha256:f37a335e82bca302e955fa39f9dfe28f1be618f016f8a2b56318e5a5111afc26 \
+            sleep infinity
+          docker exec kswap-runtime sh -ec \
+            'apt-get update && apt-get install -y --no-install-recommends qemu-system-x86 mtools'
+      - name: Negative inspector tests
+        working-directory: shell
+        run: python3 -B -m unittest discover -s tests/kswap
+      - name: Two clean builds and PC guest regression
+        working-directory: shell
+        run: python3 -B tests/kswap/run.py --output "$RUNNER_TEMP/kswap-results" --runtime-container kswap-runtime
+      - name: Save bounded public PC evidence, not guest images or binaries
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: kswap-pc-evidence
+          path: |
+            ${{ runner.temp }}/kswap-results/result.json
+            ${{ runner.temp }}/kswap-results/build-*/build.log
+            ${{ runner.temp }}/kswap-results/ksw*-commands.json
+            ${{ runner.temp }}/kswap-results/ksw*-screens.json
