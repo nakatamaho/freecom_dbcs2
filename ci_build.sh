@@ -57,17 +57,27 @@ git clean -q -x -d -f -e _output -e _watcom -e _download
   echo set COMPILER=WATCOM
   echo set WATCOM='C:\\devel\\watcomc'
   echo set MAKE=wmake /ms /h /f makefile.mak
-  # WMake executes this absolute DOS path; include the executable extension.
-  echo set XNASM='C:\\devel\\nasm\\nasm.exe'
+  # Resolve the DOS assembler through PATH, like the compiler tools.
+  echo set XNASM=nasm.exe
   echo set XUPX=upx --8086 --best
   echo set OLDPATH=%PATH%
-  echo set PATH='%WATCOM%\\binw;C:\\bin;%OLDPATH%'
+  echo set PATH='%WATCOM%\\binw;C:\\devel\\nasm;C:\\bin;%OLDPATH%'
   echo set DOS4G=QUIET
 } | unix2dos > config.bat
 
 cp config.std config.mak
 
-dosemu -td -q -K . -E "build.bat wc"
+# Check the packaged DOS executable, then its visibility from the build drive.
+# Preserve these diagnostics if a DOS launcher differs from the host tools.
+test -f "${HOME}/.dosemu/drive_c/devel/nasm/nasm.exe"
+{
+  echo '@echo off'
+  echo call config.bat
+  echo nasm.exe -v
+  echo 'if errorlevel 1 exit 1'
+  echo call build.bat wc
+} | unix2dos > ci_dos.bat
+dosemu -td -q -K . -E "ci_dos.bat"
 mv -i command.com _output/wc_dos/english/.
 
 # Turbo C 2.01 (DOS) (slow so just Spanish)
