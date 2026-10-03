@@ -50,6 +50,13 @@ def at_root_prompt(screen):
     return bool(lines) and lines[-1].strip() == b'A:\\>'
 
 
+def check_guest_screen(screen):
+    require(b'PANIC' not in screen and b'context is missing' not in screen and
+            b'String #' not in screen,
+            'guest corruption, lost context or unresolved error diagnostic')
+    require(at_root_prompt(screen), 'no root prompt after command')
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--output', required=True, type=Path)
@@ -131,9 +138,7 @@ def main():
                 commands.append(command)
                 screen = qmp(tag, '--text', command, '--screen')
                 screens.append(screen.decode())
-                require(b'PANIC' not in screen and b'context is missing' not in screen,
-                        'guest corruption or lost context')
-                require(at_root_prompt(screen), 'no root prompt after command')
+                check_guest_screen(screen)
 
             if negative:
                 send('HOG')

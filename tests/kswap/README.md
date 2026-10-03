@@ -19,7 +19,12 @@ changed by this branch. No VA, hardware or milestone acceptance is implied.
   hex-encoded context entry after its allocation, including the `/LOW` policy.
   Obtain all context pointers after insertions that may relocate the block.
 - Free a pending dynamic context on KSSF termination if shell reload failed.
-- Collect the child's DOS return code before loading the shell again.
+- Collect the child's full AH=4Dh status before loading the shell again, in a
+  field separate from DOS EXEC API errors. Decode exit code/termination reason
+  with the same helper as ordinary execution, after resource/context setup.
+  A successful exit code 7 must not trigger an MCB-corruption diagnostic.
+  The former screen gate missed the `String #38` fallback on this path; the
+  strengthened gate now rejects unresolved resource/error diagnostics.
 
 Use COMMAND.COM and KSSF.COM built together. There is no cross-version saved
 state compatibility claim. Batch, pipes and redirection of the swapped command
@@ -28,7 +33,7 @@ KSSF into an XMS or disk swapping implementation.
 
 ## Public build and test prerequisites
 
-Use Linux/amd64 Docker, Git, Python 3 and host `unzip`. The compiler is the official final
+Use Linux/amd64 Docker, Git, Python 3, host `unzip` and a host C compiler. The compiler is the official final
 Open Watcom 1.9; NASM assembles KSSF and the source test programs. The public
 identity-locked toolchain setup is reused as an external build dependency:
 
