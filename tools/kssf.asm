@@ -92,7 +92,9 @@ mainloop:
 	mov ax, 4b00h
 	int 21h					; execute external program
 	jc execPrg1
-	xor ax, ax				; no error
+	mov ah, 4dh             ; collect the child's DOS return code before reload
+	int 21h
+	xor ah, ah
 execPrg1:
 	mov sp, tsrend + STACK_SIZE	; standard stack position
 	mov dx, cs
