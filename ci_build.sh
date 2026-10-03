@@ -57,7 +57,8 @@ git clean -q -x -d -f -e _output -e _watcom -e _download
   echo set COMPILER=WATCOM
   echo set WATCOM='C:\\devel\\watcomc'
   echo set MAKE=wmake /ms /h /f makefile.mak
-  echo set XNASM='C:\\devel\\nasm\\nasm'
+  # WMake executes this absolute DOS path; include the executable extension.
+  echo set XNASM='C:\\devel\\nasm\\nasm.exe'
   echo set XUPX=upx --8086 --best
   echo set OLDPATH=%PATH%
   echo set PATH='%WATCOM%\\binw;C:\\bin;%OLDPATH%'
