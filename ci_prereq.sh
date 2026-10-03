@@ -75,7 +75,9 @@ cd ${HOME}/.dosemu/drive_c && (
   cp -p devel/upx/upx.exe bin/.
   echo PATH to make and upx binaries is 'c:/bin'
 
-  unzip -L -q ${HERE}/nasm.zip
+  # -L only folds names from DOS-origin ZIP entries. The NASM package has
+  # Unix-origin entries with uppercase paths; -LL enforces our DOS tool path.
+  unzip -LL -q ${HERE}/nasm.zip
   echo PATH to nasm binary is 'c:/devel/nasm'
 
   unzip -L -q ${HERE}/watcomc.zip

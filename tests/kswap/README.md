@@ -28,7 +28,7 @@ KSSF into an XMS or disk swapping implementation.
 
 ## Public build and test prerequisites
 
-Use Linux/amd64 Docker, Git and Python 3. The compiler is the official final
+Use Linux/amd64 Docker, Git, Python 3 and host `unzip`. The compiler is the official final
 Open Watcom 1.9; NASM assembles KSSF and the source test programs. The public
 identity-locked toolchain setup is reused as an external build dependency:
 
@@ -95,6 +95,12 @@ research helpers and are maintained here with the FreeCOM regression. The
 probe validates the MCB traversal and writes its own files because redirected
 `CALL /S` is not supported. Probe allocation is an EXEC observation, not an
 idle-memory or arbitrary-application-capacity claim.
+
+The host suite also executes the legacy CI's NASM ZIP extraction command with
+synthetic Unix-origin uppercase entries. `unzip -L` leaves those names uppercase;
+`-LL` is required to establish the lowercase directory used by the DOS recipe.
+The legacy DOS build preflights `nasm.exe -v` and resolves it through DOS PATH;
+this remains a DOS assembler build, not a substitution with the host assembler.
 
 Acceptance is revision-specific: require a successful `result.json` and the
 `FreeCOM KSSF regression` CI job on the exact source revision. Borland builds, UMB operation, live environment relocation,
