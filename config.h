@@ -186,7 +186,8 @@
    features that cannot operate there; this only selects existing FreeCOM
    configuration options. Long-filename support and LFNFOR are kept. */
 #ifdef PC88VA
-#undef FEATURE_KERNEL_SWAP_SHELL
+/* Experimental paired KSSF/COMMAND qualification branch: retain the common
+   kernel-swap feature. This does not enable XMS or change the VA commands. */
 #undef INCLUDE_CMD_LOADFIX
 #undef INCLUDE_CMD_LOADHIGH
 #undef INCLUDE_CMD_MEMORY
